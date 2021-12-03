@@ -23,9 +23,12 @@ class MAE(nn.Module):
         # extract some hyperparameters and functions from encoder (vision transformer to be trained)
 
         self.encoder = encoder
-        num_patches, encoder_dim = encoder.pos_embedding.shape[-2:]
+        num_patches, encoder_dim = encoder.pos_embedding.shape[-2:]   # [65,1024]
+
+        # (0): Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1=32, p2=32)
+        # (1): Linear(in_features=3072, out_features=1024, bias=True)
         self.to_patch, self.patch_to_emb = encoder.to_patch_embedding[:2]
-        pixel_values_per_patch = self.patch_to_emb.weight.shape[-1]
+        pixel_values_per_patch = self.patch_to_emb.weight.shape[-1]  # 3072
 
         # decoder parameters
 
@@ -40,11 +43,13 @@ class MAE(nn.Module):
 
         # get patches
 
+        # [b,3,256,256] -> [b,8*8,3072]
         patches = self.to_patch(img)
         batch, num_patches, *_ = patches.shape
 
         # patch to encoder tokens and add positions
 
+        # [b,8*8,3072] -> [b,8*8,1024]
         tokens = self.patch_to_emb(patches)
         tokens = tokens + self.encoder.pos_embedding[:, 1:(num_patches + 1)]
 
@@ -52,15 +57,17 @@ class MAE(nn.Module):
 
         num_masked = int(self.masking_ratio * num_patches)
         rand_indices = torch.rand(batch, num_patches, device = device).argsort(dim = -1)
+        # [b,48] [b,16]
         masked_indices, unmasked_indices = rand_indices[:, :num_masked], rand_indices[:, num_masked:]
 
         # get the unmasked tokens to be encoded
 
         batch_range = torch.arange(batch, device = device)[:, None]
+        # [b, 16, 1024]
         tokens = tokens[batch_range, unmasked_indices]
 
         # get the patches to be masked for the final reconstruction loss
-
+        # [b, 48, 3072]
         masked_patches = patches[batch_range, masked_indices]
 
         # attend with vision transformer
@@ -69,15 +76,18 @@ class MAE(nn.Module):
 
         # project encoder to decoder dimensions, if they are not equal - the paper says you can get away with a smaller dimension for decoder
 
+        # [b,16,1024] -> [b,16,512]
         decoder_tokens = self.enc_to_dec(encoded_tokens)
 
         # repeat mask tokens for number of masked, and add the positions using the masked indices derived above
 
+        # [b,48,512]
         mask_tokens = repeat(self.mask_token, 'd -> b n d', b = batch, n = num_masked)
         mask_tokens = mask_tokens + self.decoder_pos_emb(masked_indices)
 
         # concat the masked tokens to the decoder tokens and attend with decoder
 
+        # [b,16+48,512]
         decoder_tokens = torch.cat((mask_tokens, decoder_tokens), dim = 1)
         decoded_tokens = self.decoder(decoder_tokens)
 
