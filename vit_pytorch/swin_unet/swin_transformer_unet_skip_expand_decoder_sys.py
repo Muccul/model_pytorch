@@ -593,22 +593,22 @@ class SwinTransformerSys(nn.Module):
         depths_decoder,drop_path_rate,num_classes))
 
         self.num_classes = num_classes
-        self.num_layers = len(depths)
-        self.embed_dim = embed_dim
+        self.num_layers = len(depths)   # 4 [2,2,2,2]
+        self.embed_dim = embed_dim  # 96
         self.ape = ape
-        self.patch_norm = patch_norm
-        self.num_features = int(embed_dim * 2 ** (self.num_layers - 1))
-        self.num_features_up = int(embed_dim * 2)
+        self.patch_norm = patch_norm    # True
+        self.num_features = int(embed_dim * 2 ** (self.num_layers - 1))    # 96 * 2^3 =  768
+        self.num_features_up = int(embed_dim * 2)   # 96*2=128
         self.mlp_ratio = mlp_ratio
-        self.final_upsample = final_upsample
+        self.final_upsample = final_upsample    # 'expand_first'
 
         # split image into non-overlapping patches
         self.patch_embed = PatchEmbed(
             img_size=img_size, patch_size=patch_size, in_chans=in_chans, embed_dim=embed_dim,
             norm_layer=norm_layer if self.patch_norm else None)
-        num_patches = self.patch_embed.num_patches
-        patches_resolution = self.patch_embed.patches_resolution
-        self.patches_resolution = patches_resolution
+        num_patches = self.patch_embed.num_patches  # 56*56
+        patches_resolution = self.patch_embed.patches_resolution    # 224/4=56  (56,56)
+        self.patches_resolution = patches_resolution    # (56,56)
 
         # absolute position embedding
         if self.ape:
@@ -622,7 +622,7 @@ class SwinTransformerSys(nn.Module):
 
         # build encoder and bottleneck layers
         self.layers = nn.ModuleList()
-        for i_layer in range(self.num_layers):
+        for i_layer in range(self.num_layers):  # 4  [2,2,2,2]
             layer = BasicLayer(dim=int(embed_dim * 2 ** i_layer),
                                input_resolution=(patches_resolution[0] // (2 ** i_layer),
                                                  patches_resolution[1] // (2 ** i_layer)),
