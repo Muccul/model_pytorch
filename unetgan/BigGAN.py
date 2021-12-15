@@ -12,9 +12,9 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.nn import Parameter as P
 
-import unetgan.layers
+from unetgan import layers
+from unetgan import utils
 
-import unetgan.utils
 import copy
 from matplotlib import pyplot as plt
 
