@@ -298,7 +298,7 @@ class CompressiveTransformer(nn.Module):
         emb_dim = default(emb_dim, dim)
         mem_len = default(mem_len, seq_len)
         cmem_len = default(cmem_len, mem_len // cmem_ratio)
-        memory_layers = default(memory_layers, list(range(1, depth + 1)))
+        memory_layers = default(memory_layers, range(1, depth + 1))  # range(6,13)
 
         assert mem_len >= seq_len, 'length of memory should be at least the sequence length'
         assert cmem_len >= (mem_len // cmem_ratio), f'length of compressed memory should be at least the memory length divided by the compression ratio {int(mem_len // cmem_ratio)}'
@@ -306,7 +306,7 @@ class CompressiveTransformer(nn.Module):
 
         self.seq_len = seq_len
 
-        self.depth = depth
+        self.depth = depth  # 12
         self.memory_layers = list(memory_layers)
 
         self.token_emb = nn.Embedding(num_tokens, emb_dim)
