@@ -313,7 +313,7 @@ class CompressiveTransformer(nn.Module):
         self.to_model_dim = nn.Identity() if emb_dim == dim else nn.Linear(emb_dim, dim)
 
         seq_and_mem_len = seq_len + mem_len + cmem_len
-        self.pos_emb = nn.Parameter(torch.zeros(heads, seq_and_mem_len, dim // heads))
+        self.pos_emb = nn.Parameter(torch.zeros(heads, seq_and_mem_len, dim // heads))  # [head,t+m+cm,dim//head]
         
         self.to_logits = nn.Sequential(
             nn.Identity() if emb_dim == dim else nn.Linear(dim, emb_dim),
@@ -335,14 +335,14 @@ class CompressiveTransformer(nn.Module):
         self.reconstruction_loss_weight = reconstruction_loss_weight
 
     def forward(self, x, memories = None, mask = None):
-        x = self.token_emb(x)
-        x = self.to_model_dim(x)
+        x = self.token_emb(x)  # [b,t] -> [b,t,d]
+        x = self.to_model_dim(x)    # [b,t,d]
         b, t, d = x.shape
 
         assert t <= self.seq_len, f'input contains a sequence length {t} that is greater than the designated maximum sequence length {self.seq_len}'
 
         memories = default(memories, (None, None))
-        mem, cmem = memories
+        mem, cmem = memories    # [layer,b,m,d]  [layer,b,cm,d]
 
         num_memory_layers = len(self.memory_layers)
         init_empty_mem = lambda: torch.empty(num_memory_layers, b, 0, d, **to(x))
