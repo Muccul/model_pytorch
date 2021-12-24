@@ -34,7 +34,7 @@ model = CompressiveTransformer(
     gru_gated_residual = True,     # whether to gate the residual intersection, from 'Stabilizing Transformer for RL' paper
     mogrify_gru = False,           # experimental feature that adds a mogrifier for the update and residual before gating by the GRU
     memory_layers = range(6, 13),  # specify which layers to use long-range memory, from 'Do Transformers Need LR Memory' paper
-    one_head_kv = True,            # share one key/value head for all queries, from Shazeers 'One Write-Head is All You Need'
+    one_kv_head = True,            # share one key/value head for all queries, from Shazeers 'One Write-Head is All You Need'
     ff_glu = True                  # use GLU variant for feedforward
 )
 
