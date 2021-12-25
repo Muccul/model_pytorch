@@ -176,7 +176,7 @@ class SelfAttention(nn.Module):
         self.seq_len = seq_len
         self.mem_len = mem_len
         self.cmem_len = cmem_len
-        self.cmem_ratio = cmem_ratio
+        self.cmem_ratio = cmem_ratio    # default 4
         self.scale = self.dim_head ** (-0.5)
 
         self.compress_mem_fn = ConvCompress(dim, cmem_ratio)
@@ -346,11 +346,11 @@ class CompressiveTransformer(nn.Module):
 
         num_memory_layers = len(self.memory_layers)
         init_empty_mem = lambda: torch.empty(num_memory_layers, b, 0, d, **to(x))
-        mem = default(mem, init_empty_mem)
-        cmem = default(cmem, init_empty_mem)
+        mem = default(mem, init_empty_mem)    # [layer,b,m,d]
+        cmem = default(cmem, init_empty_mem)  # [layer,b,cm,d]
 
         total_len = mem.shape[2] + cmem.shape[2] + self.seq_len
-        pos_emb = self.pos_emb[:, (self.seq_len - t):total_len]
+        pos_emb = self.pos_emb[:, (self.seq_len - t):total_len]   # [head,t+m+cm,dim//head]
 
         next_mem = []
         next_cmem = []
