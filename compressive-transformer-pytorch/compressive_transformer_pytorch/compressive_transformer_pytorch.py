@@ -129,7 +129,8 @@ class ConvCompress(nn.Module):
         self.conv = nn.Conv1d(dim, dim, ratio, stride = ratio)
 
     def forward(self, mem):
-        mem = mem.transpose(1, 2)
+        # mem [b,n,d]
+        mem = mem.transpose(1, 2)   # [b,n,d] -> [b,d n]
         compressed_mem = self.conv(mem)
         return compressed_mem.transpose(1, 2)
 
@@ -214,7 +215,7 @@ class SelfAttention(nn.Module):
         k, v = self.to_kv(kv_input).chunk(2, dim=-1)  # [b,len_cmem+mem+x,h_d]
 
         merge_heads = lambda x: reshape_dim(x, -1, (-1, dim_h)).transpose(1, 2)
-        q, k, v = map(merge_heads, (q, k, v))   # q:[b,h,len_x,h_d]
+        q, k, v = map(merge_heads, (q, k, v))   # [b,n,d] -> [b,h,n,h_d]
 
         k, v = map(lambda x: x.expand(-1, h, -1, -1), (k, v))  # k,v:[b,h,len_cmem+mem+x,h_d]
 
@@ -257,12 +258,12 @@ class SelfAttention(nn.Module):
         old_mem_padding = old_mem.shape[1] % self.cmem_ratio
 
         if old_mem_padding != 0:
-            old_mem = F.pad(old_mem, (0, 0, old_mem_padding, 0), value = 0.)
+            old_mem = F.pad(old_mem, (0, 0, old_mem_padding, 0), value = 0.)    # [b,pad+m,d]
 
         if old_mem.shape[1] == 0 or self.cmem_len <= 0:
             return logits, Memory(new_mem, new_cmem), aux_loss
 
-        compressed_mem = self.compress_mem_fn(old_mem.detach())
+        compressed_mem = self.compress_mem_fn(old_mem.detach())  # [b,pad+m,d] - > [b,pad+m//4,d] [b,cm,d]
         old_cmem, new_cmem = split_at_index(1, -self.cmem_len, torch.cat((cmem, compressed_mem), dim=1))
 
         if not self.training:
@@ -272,8 +273,8 @@ class SelfAttention(nn.Module):
 
         self.to_kv.weight.detach_()
 
-        cmem_k, cmem_v = self.to_kv(compressed_mem).chunk(2, dim=-1)
-        cmem_k, cmem_v = map(merge_heads, (cmem_k, cmem_v))
+        cmem_k, cmem_v = self.to_kv(compressed_mem).chunk(2, dim=-1)    # [b,cm,d] -> [b,cm,d]
+        cmem_k, cmem_v = map(merge_heads, (cmem_k, cmem_v))  # [b,cm,d] -> [b,h,cm,h_d]
         cmem_k, cmem_v = map(lambda x: x.expand(-1, h, -1, -1), (cmem_k, cmem_v))
 
         old_mem_range = slice(- min(mem_len, self.mem_len) - self.seq_len, -self.seq_len)
