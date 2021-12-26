@@ -40,3 +40,4 @@ def get_mem_from_pool(mem_pool, cur_patch_idx, mem_expand_size=1, patch_height=4
     mem_idxs = [int(coord[0] * patch_width + coord[1]) for coord in coords_filtered]
 
     return [mem_pool[idx] for idx in mem_idxs]
+
