@@ -550,7 +550,7 @@ pred = nest(img) # (1, 1000)
 
 ## Simple Masked Image Modeling
 
-<img src="./images/simmim.png" width="400px"/>
+<img src="../images/simmim.png" width="400px"/>
 
 This <a href="https://arxiv.org/abs/2111.09886">paper</a> proposes a simple masked image modeling (SimMIM) scheme, using only a linear projection off the masked tokens into pixel space followed by an L1 loss with the pixel values of the masked patches. Results are competitive with other more complicated approaches.
 
@@ -590,7 +590,7 @@ torch.save(v.state_dict(), './trained-vit.pt')
 
 ## Masked Autoencoder
 
-<img src="./images/mae.png" width="400px"/>
+<img src="../images/mae.png" width="400px"/>
 
 A new <a href="https://arxiv.org/abs/2111.06377">Kaiming He paper</a> proposes a simple autoencoder scheme where the vision transformer attends to a set of unmasked patches, and a smaller decoder tries to reconstruct the masked pixel values.
 
