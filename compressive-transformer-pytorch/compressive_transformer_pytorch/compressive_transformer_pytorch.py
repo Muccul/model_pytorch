@@ -296,9 +296,9 @@ class SelfAttention(nn.Module):
 class CompressiveTransformer(nn.Module):
     def __init__(self, num_tokens, dim, seq_len, depth, emb_dim = None, memory_layers = None, mem_len = None, cmem_len = None, cmem_ratio = 4, heads = 8, gru_gated_residual = True, mogrify_gru = False, attn_dropout = 0., ff_glu = False, ff_dropout = 0., attn_layer_dropout = 0., reconstruction_attn_dropout = 0., reconstruction_loss_weight = 1., one_kv_head = False):
         super().__init__()
-        emb_dim = default(emb_dim, dim)
-        mem_len = default(mem_len, seq_len)
-        cmem_len = default(cmem_len, mem_len // cmem_ratio)
+        emb_dim = default(emb_dim, dim)      # 128
+        mem_len = default(mem_len, seq_len)  # 1024
+        cmem_len = default(cmem_len, mem_len // cmem_ratio)  # 1024//4=256
         memory_layers = default(memory_layers, range(1, depth + 1))  # range(6,13)
 
         assert mem_len >= seq_len, 'length of memory should be at least the sequence length'
